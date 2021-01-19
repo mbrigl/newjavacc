@@ -8,18 +8,17 @@ import org.javacc.parser.Main;
  */
 public class JavaCCMain {
 
-  public static final String BASE   = System.getProperty("user.dir") + "/src/main/resources";
-  public static final String TARGET = System.getProperty("user.dir") + "/src/test/java";
+  public static final String BASE   = "/data/smartIO/develop/parser/parser/src/main/resources/it/smartio/text/parser";
+  public static final String TARGET = "/data/smartIO/develop/parser/parser/src/main/resources/it/smartio/text/oql";
 
 
   public static void main(String[] args) throws Exception {
-    String[] arguments =
-        new String[] { "-CODE_GENERATOR=Java", "-OUTPUT_DIRECTORY=" + TARGET + "/example1", BASE + "/test.jjt" };
+    String[] arguments = new String[] { "-CODE_GENERATOR=Java", "-OUTPUT_DIRECTORY=" + TARGET, BASE + "/Expression.jjt" };
 
     // JJTree jjtree = new JJTree();
     // jjtree.main(arguments);
 
-    arguments[2] = TARGET + "/examples" + "/Example1.jj";
+//    arguments[2] = TARGET + "/examples" + "/Example1.jj";
 
     Main.mainProgram(arguments);
   }
