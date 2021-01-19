@@ -2,10 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 #pragma once
 
-#include "SimpleNode.h"
+#include "Node.h"
 #include "ASTDivNode.h"
 #include "ASTNENode.h"
 #include "ASTCompilationUnit.h"
+#include "SimpleNode.h"
 #include "ASTMulNode.h"
 #include "ASTIntConstNode.h"
 #include "ASTWriteStatement.h"
@@ -30,4 +31,4 @@
 #include "ASTAddNode.h"
 #include "ASTVarDeclaration.h"
 #include "ASTAndNode.h"
-/* JavaCC - OriginalChecksum=01b202eaca6d01a772c8087273ecd685 (do not edit this line) */
+/* JavaCC - OriginalChecksum=3a4e34817a2a76892d4cf5336e17d78d (do not edit this line) */

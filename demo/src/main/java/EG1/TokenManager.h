@@ -16,10 +16,10 @@ namespace EG1 {
 
 class TokenManager {
 public:
-  /** This gets the next token from the input stream.
-   *  A token of kind 0 (<EOF>) should be returned on EOF.
-   */
   virtual       ~TokenManager() { }
+  /** This gets the next token from the input stream.
+   *  A token of kind 0 (`<EOF>`) should be returned on EOF.
+   */
   virtual Token *getNextToken() = 0;
   virtual void   setParser(void* /*parser*/) {};
   virtual void   lexicalError() {
@@ -29,4 +29,4 @@ public:
 };
 
 }
-/* JavaCC - OriginalChecksum=a2363375c960870e4cb8ae9dcc5cffe8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=0b8f9963ac4ca4dcc47dd1cb51fa6de2 (do not edit this line) */

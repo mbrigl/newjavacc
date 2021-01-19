@@ -7,7 +7,7 @@
 class SPLParserVisitor
 {
 public:
-  virtual void visit(const SimpleNode *node, void* data) = 0;
+  virtual void visit(const Node *node, void* data) = 0;
   virtual void visit(const ASTCompilationUnit *node, void* data) = 0;
   virtual void visit(const ASTVarDeclaration *node, void* data) = 0;
   virtual void visit(const ASTAssignment *node, void* data) = 0;
@@ -39,8 +39,8 @@ public:
 };
 class SPLParserDefaultVisitor : public SPLParserVisitor {
 public:
-  virtual void defaultVisit(const SimpleNode *node, void* data) = 0;
-  virtual void visit(const SimpleNode *node, void* data) {
+  virtual void defaultVisit(const Node *node, void* data) = 0;
+  virtual void visit(const Node *node, void* data) {
     defaultVisit(node, data);
   }
   virtual void visit(const ASTCompilationUnit *node, void* data) {
@@ -126,4 +126,4 @@ public:
   }
   ~SPLParserDefaultVisitor() { }
 };
-/* JavaCC - OriginalChecksum=ed30163d743195b7f1d5b425b0f3c0bf (do not edit this line) */
+/* JavaCC - OriginalChecksum=2b8196d56dd3a1604020e331d120efad (do not edit this line) */

@@ -15,9 +15,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    src/main/java/main.cc
+    src/test/java/special/special7/Main.cpp \
+    src/test/java/special/special7/StreamReader.cpp \
+    src/test/java/special/special7/CharStream.cc \
+    src/test/java/special/special7/ParseException.cc \
+    src/test/java/special/special7/SpecialToken.cc \
+    src/test/java/special/special7/SpecialTokenTokenManager.cc \
+    src/test/java/special/special7/Token.cc \
+    src/test/java/special/special7/TokenMgrError.cc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+HEADERS += \
+    src/test/java/special/special7/StreamReader.h \
+    src/test/java/special/special7/CharStream.h \
+    src/test/java/special/special7/ErrorHandler.h \
+    src/test/java/special/special7/JavaCC.h \
+    src/test/java/special/special7/ParseException.h \
+    src/test/java/special/special7/SpecialToken.h \
+    src/test/java/special/special7/SpecialTokenConstants.h \
+    src/test/java/special/special7/SpecialTokenTokenManager.h \
+    src/test/java/special/special7/Token.h \
+    src/test/java/special/special7/TokenManager.h \
+    src/test/java/special/special7/TokenMgrError.h

@@ -2,5 +2,6 @@
 /* JavaCCOptions:MULTI=false,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=false */
 #pragma once
 
+#include "Node.h"
 #include "SimpleNode.h"
-/* JavaCC - OriginalChecksum=ffcb529d1af81ce4de1e4ecc68ca510a (do not edit this line) */
+/* JavaCC - OriginalChecksum=85810a3fc055c6001c036280bf874ca0 (do not edit this line) */

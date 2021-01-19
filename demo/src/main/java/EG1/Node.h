@@ -5,58 +5,54 @@
 #include <vector>
 #include "JavaCC.h"
 #include "Token.h"
-
+#include "Tree.h"
+#include "ParserTreeConstants.h"
 
 namespace EG1 {
 
-/* All AST nodes must implement this interface.  It provides basic
-   machinery for constructing the parent and child relationships
-   between nodes. */
-
 class Parser;
-class Node {
-  friend class SimpleNode;
+
+class Node : public Tree {
+protected: 
+  std::vector<Node*> children;
+  Node*              parent = nullptr;
+  void*              value  = nullptr;
+//int                numChildren;
+  Parser*    parser = nullptr;
+  int                id = 0;
+
+public: 
+           Node(int id);
+           Node(Parser* parser, int id);
+  virtual ~Node();
+
+//#if !NODE_FACTORY
+//\#define jjtCreate(id) new Node(id)
+//\#define jjtCreate(p, id) new Node(p, id)
+//#fi
+
+  virtual void           jjtOpen() const;
+  virtual void           jjtClose() const;
+  virtual void           jjtSetParent(Node *n);
+  virtual Node*          jjtGetParent() const;
+  virtual void           jjtAddChild(Node *n, int i);
+  virtual Node*          jjtGetChild(int i) const;
+  virtual int            jjtGetNumChildren() const;
+  virtual void           jjtSetValue(void * value);
+  virtual void*          jjtGetValue() const;
+
+  virtual std::vector<Node*> jjtExtractChildrenForDestruction();
   
-public:
-  /** This method is called after the node has been made the current
-    node.  It indicates that child nodes can now be added to it. */
-  virtual void    jjtOpen() const = 0;
+  /* You can override these two methods in subclasses of Node to customize the way the node appears when the tree is dumped.
+     If your output uses more than one line you should override toString(string), otherwise overriding toString() is probably all
+     you need to do. */   
+  virtual JJString toString() const;
+  virtual JJString toString(const JJString& prefix) const;
 
-  /** This method is called after all the child nodes have been added. */
-  virtual void    jjtClose() const = 0;
-
-  /** This pair of methods are used to inform the node of its parent. */
-  virtual void    jjtSetParent(Node *n) = 0;
-  virtual Node*   jjtGetParent() const = 0;
-
-  /** This method tells the node to add its argument to the node's list of children.  */
-  virtual void    jjtAddChild(Node *n, int i) = 0;
-
-  /** This method returns a child node.  The children are numbered
-     from zero, left to right. */
-  virtual Node*   jjtGetChild(int i) const = 0;
-
-  /** Return the number of children the node has. */
-  virtual int     jjtGetNumChildren() const = 0;
-  virtual int     getId() const = 0;
-
-
-  /** Clear list of children, and return children that we have before.
-      Used in destructor to do linear destruction of tree.
-      Since some parsers has subclassed Node, we can't use pure virtual
-      function, that would break backward compatibility. */
-private: 
-  virtual std::vector<Node *> jjtExtractChildrenForDestruction() {
-    std::vector<Node *> x;
-    return x;
-  }
-  friend class SimpleNode;
-
-public:
-           Node() { }
-  virtual ~Node() { }
+  /* Override this method if you want to customize how the node dumps out its children. */
+  virtual void          dump(const JJString& prefix) const;
+  virtual void          dumpToBuffer(const JJString& prefix, const JJString& separator, JJString *sb) const;
+  virtual int           getId() const { return id;  }
 };
-
-
 }
-/* JavaCC - OriginalChecksum=ab581c7195f6f6dc770e0e746c014b15 (do not edit this line) */
+/* JavaCC - OriginalChecksum=57bd80292b8e54eef2f81f2c8b2bc865 (do not edit this line) */

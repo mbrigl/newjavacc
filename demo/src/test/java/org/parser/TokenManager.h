@@ -15,10 +15,10 @@
 
 class TokenManager {
 public:
-  /** This gets the next token from the input stream.
-   *  A token of kind 0 (<EOF>) should be returned on EOF.
-   */
   virtual       ~TokenManager() { }
+  /** This gets the next token from the input stream.
+   *  A token of kind 0 (`<EOF>`) should be returned on EOF.
+   */
   virtual Token *getNextToken() = 0;
   virtual void   setParser(void* /*parser*/) {};
   virtual void   lexicalError() {
@@ -27,4 +27,4 @@ public:
 
 };
 
-/* JavaCC - OriginalChecksum=5d0ef97ff86203a5f54fd1201ba20a85 (do not edit this line) */
+/* JavaCC - OriginalChecksum=f29eb39cdf70e1355b4e4a4d820ebd8f (do not edit this line) */
