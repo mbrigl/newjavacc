@@ -216,6 +216,7 @@
 	<modules>
 		<module>core</module>
 		<module>codegen</module>
+		<module>demo</module>
  	</modules>
 
 

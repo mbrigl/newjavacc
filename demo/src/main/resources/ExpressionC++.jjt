@@ -1,0 +1,1061 @@
+/*
+ * Copyright (c) 2001-2016 Territorium Online Srl. All Rights Reserved.
+ *
+ * This file contains Original Code and/or Modifications of Original Code as
+ * defined in and that are subject to the Territorium Online License Version
+ * 1.0. You may not use this file except in compliance with the License. Please
+ * obtain a copy of the License at http://www.mapaccel.com/license/ and read it
+ * before using this file.
+ *
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS
+ * OR IMPLIED, AND TERRITORIUM ONLINE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+ * A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. Please see the
+ * License for the specific language governing rights and limitations under the
+ * License.
+ */
+options
+{
+  OUTPUT_LANGUAGE = "c++"; // java,c++
+  JAVA_TEMPLATE_TYPE = "modern";
+
+  STATIC = false; /* true */
+  CACHE_TOKENS = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  UNICODE_INPUT = true; /* false */
+  JAVA_UNICODE_ESCAPE = true;
+  SUPPORT_CLASS_VISIBILITY_PUBLIC = false; /* true */
+
+  NODE_SCOPE_HOOK = true;
+  NODE_DEFAULT_VOID = true; /* false */
+
+  OUTPUT_DIRECTORY = ".";
+  JJTREE_OUTPUT_DIRECTORY = "../../parser";
+
+  // DEBUG
+  DEBUG_TOKEN_MANAGER = false;
+  DEBUG_PARSER = false;
+}
+
+PARSER_BEGIN(Expression)
+//C++
+protected:
+  virtual void jjtreeOpenNodeScope(SimpleNode * node) {};
+  virtual void jjtreeCloseNodeScope(SimpleNode * node) {};
+
+PARSER_END(Expression)
+
+
+/*****************************************
+ * LEXICAL & REGEXP GRAMMARS STARTS HERE *
+ *****************************************/
+// Skip White Space characters and Line Terminators
+SKIP :
+{
+  "\u0009"	/* Horizontal Tabulation \t */
+| "\n"		/* New Line u000A */
+| "\u000B"	/* Vertical Tabulation \v */
+| "\u000C"	/* Form Feed \f */
+| "\r"		/* Carriage Return u000D */
+| "\u0020"	/* Space */
+}
+
+
+// Separators & Brackets
+TOKEN :
+{
+  < LP : "(" >
+| < RP : ")" >
+| < LSP : "[" >
+| < RSP : "]" >
+| < DOT : "." >
+| < COMMA : "," >
+| < COLON : ":" >
+| < DOLLAR : "$" >
+| < SEMICOLON : ";" >
+}
+
+
+
+// Internal Tokens
+TOKEN:
+{
+  < #SIGN :		["-","+"] >
+| < #DIGIT :	["0"-"9"] >
+| < #HEX :		["0"-"9","a"-"f","A"-"F"] >
+}
+
+
+// Constants Tokens
+TOKEN [ IGNORE_CASE ] :
+{
+  < NULL_TOKEN : "null" >
+| < BOOL_TOKEN : "false" | "true"  >
+}
+
+
+// Numeric Tokens
+TOKEN:
+{
+  < OCTAL_TOKEN : "0" ([ "0"-"7" ])+ >
+| < INTEGER_TOKEN : "0" | [ "1"-"9" ] (< DIGIT >)* >
+| < HEXADECIMAL_TOKEN : "0" [ "x", "X" ] (< HEX >)+ >
+
+| < DECIMAL_TOKEN : "NaN" | "Infinity" | < DECIMAL > | (< INTEGER_TOKEN >  | < DECIMAL >) < EXPONENT > >
+
+| < #DECIMAL :	("0" | ["1"-"9"] (< DIGIT >)*)? "." (< DIGIT >)+ >
+| < #EXPONENT :	["e","E"] (< SIGN >)? (< DIGIT >)+ >
+}
+
+
+// String Tokens
+TOKEN:
+{ 
+  < UUID_TOKEN : "{" (< HEX >){8} "-" (< HEX >){4} "-" (< HEX >){4} "-" (< HEX >){4} "-" (< HEX >){12} "}" >
+| < REGEXP_TOKEN : "/" ( "\\/" | ~["/"] )* "/" >
+| < STRING_TOKEN : "'" ( "''" | ~["'"] )* "'" >
+}
+
+
+// Temporal Tokens
+TOKEN:
+{ 
+  < LOCALTIME_TOKEN : (< DIGIT >){2} ":" (< DIGIT >){2} ( ":" (< DIGIT >){2} ( "." (< DIGIT >)+ )? )? >
+| < LOCALDATE_TOKEN : (< SIGN >)? (< DIGIT >){4,} "-" (< DIGIT >){2} "-" (< DIGIT >){2} >
+| < LOCALDATETIME_TOKEN : < LOCALDATE_TOKEN > "T" < LOCALTIME_TOKEN > >
+
+| < OFFSETTIME_TOKEN : < LOCALTIME_TOKEN > < TIMEZONE> >
+| < OFFSETDATETIME_TOKEN : < LOCALDATETIME_TOKEN > < TIMEZONE> >
+
+| < #TIMEZONE : "Z" | < SIGN > (< DIGIT >){2} ( (":")? (< DIGIT >){2})? >
+}
+
+
+// Geometry Tokens
+TOKEN [ IGNORE_CASE ] :
+{
+  < SRID_TOKEN : "SRID=" >
+| < POINT_TOKEN : "POINT" >
+| < POLYGON_TOKEN : "POLYGON" >
+| < LINESTRING_TOKEN : "LINESTRING" >
+| < MULTIPOINT_TOKEN : "MULTIPOINT" >
+| < MULTIPOLYGON_TOKEN : "MULTIPOLYGON" >
+| < MULTILINESTRING_TOKEN : "MULTILINESTRING" >
+| < GEOMETRYCOLLECTION_TOKEN : "GEOMETRYCOLLECTION" >
+| < ENVELOPE_TOKEN : "ENVELOPE" >
+| < DE9IM: (["*", "T", "F", "0"-"2"]){9} >
+}
+
+
+// Arithmetic operators
+TOKEN:
+{
+  < ADD : "+" >
+| < SUB : "-" >
+| < MUL : "*" >
+| < DIV : "/" >
+| < MOD : "%" >
+}
+
+
+// Sort operators
+TOKEN [ IGNORE_CASE ] :
+{
+  < ASC : "ASC" >
+| < DESC : "DESC" >
+}
+
+
+// Logic operators
+TOKEN [ IGNORE_CASE ] :
+{
+  < OR : "OR" >
+| < AND : "AND" >
+| < NOT : "NOT" >
+}
+
+
+// Comparison operators
+TOKEN [ IGNORE_CASE ] :
+{
+  < EQ : ( "=" | "EQ" ) >
+| < LT : ( "<" | "LT" ) >
+| < GT : ( ">" | "GT" ) >
+| < NEQ : ( "<>" | "NE" ) >
+| < LTE : ( "<=" | "LE" ) >
+| < GTE : ( ">=" | "GE" ) >
+| < IS : "IS" >
+| < IN : "IN" >
+| < LIKE : "LIKE" >
+| < ILIKE : "ILIKE" >
+| < EXISTS : "EXISTS" >
+| < BETWEEN : "BETWEEN" >
+}
+
+
+// Spatial operators
+TOKEN [ IGNORE_CASE ] :
+{
+  < BBOX : "BBOX" >
+| < RELATE : "RELATE" >
+| < EQUALS : "EQUALS" >
+| < BEYOND : "BEYOND" >
+| < WITHIN : "WITHIN" >
+| < DWITHIN : "DWITHIN" >
+| < TOUCHES : "TOUCHES" >
+| < CROSSES : "CROSSES" >
+| < CONTAINS : "CONTAINS" >
+| < OVERLAPS : "OVERLAPS" >
+| < DISJOINT : "DISJOINT" >
+| < INTERSECTS : "INTERSECTS" >
+}
+
+// unit constants
+TOKEN [ IGNORE_CASE ] :
+{
+  < FEET : "feet" >
+| < METERS : "meters" >
+| < KILOMETERS : "kilometers" >
+| < STATUTE_MILES : "statute miles" >
+| < NAUTICAL_MILES : "nautical miles" >
+}
+
+
+// Identifier Tokens
+TOKEN:
+{ 
+  < IDENTIFIER_TOKEN : < LETTER > (< LETTER > | < DIGIT >| < DOLLAR >)* >
+| < IDENTIFIER_QUOTED_TOKEN : "\"" ( ~["\""] )* "\"" >
+| < #LETTER : ["a"-"z", "A"-"Z", "_"] >
+}
+
+
+// Duration Literals
+TOKEN:
+{ 
+  < DURATION : "P" (< DURATION_DATE > ("T" < DURATION_TIME >)? | "T" < DURATION_TIME >) >
+
+| < #DURATION_DATE : (< DIGIT > "Y")? (< DIGIT > "M")? (< DIGIT > "W")? (< DIGIT > "D")? >
+| < #DURATION_TIME : (< DIGIT > "H")? (< DIGIT > "M")? (< DIGIT > "S")? >
+}
+
+
+
+Node* compile() : {}
+{
+  compileExpression()
+  { return jjtree.rootNode(); }
+}
+
+
+
+/*****************************************
+ *         LITERAL GRAMMAR               *
+ *****************************************/
+void parseNull() :
+{}
+{
+  < NULL_TOKEN > #NIL
+}
+
+
+void parseBool() :
+{}
+{
+  < BOOL_TOKEN > #BOOL
+}
+
+
+void parseUuid() :
+{}
+{
+  < UUID_TOKEN > #UUID
+}
+
+
+void parseRegExp() :
+{}
+{
+  < REGEXP_TOKEN > #REGEXP
+}
+
+
+void parseString() :
+{}
+{
+  < STRING_TOKEN > #STRING
+}
+
+
+void parseInteger() :
+{}
+{
+  < OCTAL_TOKEN > #OCTAL
+| < INTEGER_TOKEN > #INTEGER
+| < HEXADECIMAL_TOKEN > #HEXADECIMAL
+}
+
+
+void parseDecimal() :
+{}
+{
+  < DECIMAL_TOKEN > #DECIMAL
+}
+
+
+void parseNumber() :
+{}
+{
+  parseInteger()
+| parseDecimal()
+| < ADD > (parseInteger() | parseDecimal())
+| < SUB > (parseInteger() #NEGATIVE_INTEGER | parseDecimal() #NEGATIVE_NUMBER)
+}
+
+
+void parseTemporal() :
+{}
+{
+  < LOCALTIME_TOKEN > #LOCALTIME
+| < LOCALDATE_TOKEN > #LOCALDATE
+| < LOCALDATETIME_TOKEN > #LOCALDATETIME
+| < OFFSETTIME_TOKEN > #OFFSETTIME
+| < OFFSETDATETIME_TOKEN > #OFFSETDATETIME
+}
+
+
+void parseGeometry() :
+{}
+{
+  < POINT_TOKEN > parsePoint()
+| < POLYGON_TOKEN > parsePolygon()
+| < LINESTRING_TOKEN > parseLineString()
+| < MULTIPOINT_TOKEN > parseMultiPoint()
+| < MULTIPOLYGON_TOKEN > parseMultiPolygon()
+| < MULTILINESTRING_TOKEN > parseMultiLineString()
+| < GEOMETRYCOLLECTION_TOKEN > parseGeometryCollection()
+| < ENVELOPE_TOKEN > parseEnvelope()
+}
+
+
+void parseEWKT() #EWKT :
+{}
+{
+  < SRID_TOKEN > parseNumber() < SEMICOLON > parseGeometry()
+}
+
+
+void parseCoordinate() #COORDINATE :
+{}
+{
+  parseNumber() ( parseNumber() )+
+}
+
+void parseCoordinateArray() #COORDINATEARRAY :
+{}
+{
+  < LP > parseCoordinate() ( < COMMA > parseCoordinate() )* < RP >
+}
+
+void parsePoint() #POINT :
+{}
+{
+  (< LP > parseCoordinate() < RP >)?
+}
+
+void parsePointCoordinate() :
+{}
+{
+  parseCoordinate() #Point | parsePoint()
+}
+
+void parseLineString() #LINESTRING :
+{}
+{
+  (parseCoordinateArray() )?
+}
+
+void parsePolygon() #POLYGON :
+{}
+{
+  (< LP > parseCoordinateArray() (< COMMA > parseCoordinateArray() )* < RP >)?
+}
+
+void parseMultiPoint() #MULTIPOINT :
+{}
+{
+  (< LP > parsePointCoordinate() (< COMMA > parsePointCoordinate() )* < RP >)?
+}
+
+void parseMultiLineString() #MULTILINESTRING :
+{}
+{
+  (< LP > parseLineString() (< COMMA > parseLineString() )* < RP >)?
+}
+
+void parseMultiPolygon() #MULTIPOLYGON :
+{}
+{
+  (< LP > parsePolygon() (< COMMA > parsePolygon() )* < RP >)?
+}
+
+void parseGeometryCollection() #GEOMETRYCOLLECTION :
+{}
+{
+  (< LP > parseGeometry() (< COMMA > parseGeometry() )* < RP >)?
+}
+
+void parseEnvelope() #ENVELOPE :
+{}
+{
+  (< LP > parseNumber() < COMMA > parseNumber() < COMMA > parseNumber() < COMMA > parseNumber() < RP >)?
+}
+
+void parseIdentifier() :
+{}
+{
+  < IDENTIFIER_TOKEN > #IDENTIFIER
+| < IDENTIFIER_QUOTED_TOKEN > #IDENTIFIER_QUOTED
+}
+
+void parseDE9IM() :
+{}
+{
+  < DE9IM > #DE9IM
+}
+
+void parseDistanceUnits() #LENGTH_UNITS :
+{}
+{
+  < FEET >
+| < METERS >
+| < KILOMETERS >
+| < STATUTE_MILES >
+| < NAUTICAL_MILES >
+}
+
+
+/*****************************************
+ *       NAME GRAMMAR                    *
+ *****************************************/
+void compileName() :
+{}
+{
+  parseName() < EOF >
+}
+
+
+/*
+ * Name ::=
+ *		  <LocalName> ("." <Name> | "[" <Identifier> "]" ("." <Name>) ? ) ?
+ */
+void parseName() #NAME :
+{}
+{
+  parseLocalName()
+  (
+	< DOT > parseName()
+  | < LSP > parseIdentifier() #CLASSIFIER < RSP > ( < DOT > parseName() ) ? ) ?
+}
+
+
+/*
+ * LocalName ::=
+ *		  <Identifier>
+ */
+void parseLocalName() #LOCALNAME :
+{}
+{
+  parseIdentifier()
+}
+
+
+
+
+/*****************************************
+ *       EXPRESSION GRAMMAR              *
+ *****************************************/
+void compileExpression() :
+{}
+{
+  parseExpressionList() < EOF >
+}
+
+
+/*
+ * ExpressionList ::=
+ *		  <Expression> ("," <Expression>)*
+ */
+void parseExpressionList() #EXPRESSIONLIST :
+{}
+{
+  parseFilter() (< COMMA > parseFilter() )*
+}
+
+
+/*
+ * Expression ::=
+ *		  <MultiplicativeExpression> ("+" <MultiplicativeExpression>)*
+ *      | <MultiplicativeExpression> ("-" <MultiplicativeExpression>)*
+ */
+void parseExpression() #BINARYEXPRESSION :
+{}
+{
+  parseMultiplicativeExpression()
+  (
+    < ADD > parseMultiplicativeExpression() #ADDITION
+  | < SUB > parseMultiplicativeExpression() #SUBTRACTION)*
+}
+
+
+/*
+ * MultiplicativeExpression ::=
+ *		  <UnaryExpression> ("*" <UnaryExpression>)*
+ *		| <UnaryExpression> ("/" <UnaryExpression>)*
+ *		| <UnaryExpression> ("%" <UnaryExpression>)*
+ */
+void parseMultiplicativeExpression() #BinaryExpression :
+{}
+{
+  parseUnaryExpression()
+  (
+    < MUL > parseUnaryExpression() #Multiplication
+  | < DIV > parseUnaryExpression() #Division
+  | < MOD > parseUnaryExpression() #Modulo)*
+}
+
+
+/*
+ * UnaryExpression ::=
+ *		  <NULL_LITERAL>
+ *		| <Literal>
+ *		| <NamedExpression>
+ *		| "(" <Expression> ")"
+ */
+void parseUnaryExpression() :
+{}
+{
+  parseNull()
+| parseLiteral()
+| parseNamedExpression() 
+| < LP > parseFilter() < RP > 
+}
+
+
+/*
+ * Literal ::=
+ *		  <UUID_LITERAL>
+ *		| <NUMBER_LITERAL>
+ *		| <STRING_LITERAL>
+ *		| <TEMPORAL_LITERAL>
+ *		| <GEOMETRY_LITERAL>
+ */
+void parseLiteral() #LITERAL :
+{}
+{
+  parseUuid()
+| parseNumber()
+| parseString()
+| parseTemporal()
+| parseGeometry()
+| parseEWKT()
+}
+
+
+/*
+ * NamedExpression ::=
+ *		  <Binding>
+ *		| <Parameter>
+ *		| <Attribute>
+ *		| <Function>
+ */
+void parseNamedExpression() :
+{}
+{
+  parseBinding() 
+| parseParameter() 
+| LOOKAHEAD(parseFunction()) parseFunction() 
+| parseAttribute() 
+}
+
+
+/*
+ * Parameter ::=
+ *		  "$" <Identifier>
+ * 		| "$" <INTEGER_LITERAL>
+ */
+void parseParameter() :
+{}
+{
+  < DOLLAR >
+  (
+    parseIdentifier() #PARAMETER
+  | parseInteger() #PARAMETERINDEX)
+}
+
+
+/*
+ * Binding ::=
+*		  ":" <Name>
+ */
+void parseBinding() #BINDING :
+{}
+{
+  < COLON > parseName()
+}
+
+
+/*
+ * Attribute ::=
+ *		  <Name>
+ */
+void parseAttribute() #ATTRIBUTE :
+{}
+{
+  parseName()
+}
+
+
+/*
+ * Function ::=
+ *		  <Name> "(" <ExpressionList> ")"
+ */
+void parseFunction() #FUNCTION :
+{}
+{
+  parseName() < LP > ( parseExpressionList() )? < RP > 
+}
+
+
+
+
+
+/*****************************************
+ *          FILTER GRAMMAR               *
+ *****************************************/
+void compileFilter() :
+{}
+{
+  parseFilter() < EOF >
+}
+
+
+/*
+ * Filter ::=
+ *		  <AndFilter> ( "OR" <AndFilter> )*
+ */
+void parseFilter() #OR :
+{}
+{
+  parseAndFilter() (< OR > parseAndFilter())*
+}
+
+
+/*
+ * AndFilter ::=
+ *		  <Predicate> ( "AND" <Predicate> )*
+ */
+void parseAndFilter() #AND :
+{}
+{
+  parseNotFilter() (< AND > parseNotFilter())*
+}
+
+
+/*
+ * NotFilter ::=
+ *		  "NOT" <Predicate>
+ *		|  <Predicate>
+ */
+void parseNotFilter() :
+{}
+{
+  < NOT > parsePredicate() #NOT
+| parsePredicate()
+}
+
+
+/*
+ * Predicate ::=
+ *		  "(" <Filter> ")"
+ *		| <BOOL_LITERAL>
+ *		| <SpatialPredicate>
+ *		| <ExistsPredicate>
+ *		| <RelationalPredicate>
+ */
+void parsePredicate() :
+{}
+{
+  parseBool()
+| parseSpatialPredicate() #SPATIAL_PREDICATE
+| LOOKAHEAD(parseExistsPredicate()) parseExistsPredicate() #EXISTS
+| LOOKAHEAD(parseRelationalPredicate()) parseRelationalPredicate()
+| parseExpression()
+//| < LP > parseFilter() < RP > 
+}
+
+
+/*
+ * ExistsPredicate ::=
+ *		  <NamedExpression> <ExistsOperator>
+ */
+void parseExistsPredicate() :
+{}
+{
+  parseNamedExpression() parseExistsOperator()
+}
+
+
+/*
+ * ExistsOperator ::=
+ *		  <NamedExpression> "EXISTS"
+ *		  <NamedExpression> "NOT" "EXISTS"
+ */
+void parseExistsOperator() :
+{}
+{
+  < EXISTS > #EXISTS_OPERATOR
+| < NOT > < EXISTS > #NOTEXISTS_OPERATOR
+}
+
+
+/*
+ * RelationalPredicate ::=
+ *		  <Expression> <ExpressionPredicatePart>
+ */
+void parseRelationalPredicate() #RELATIONAL_PREDICATE :
+{}
+{
+  parseExpression() parseRelationalPredicatePart()
+}
+
+
+/*
+ * RelationalPredicatePart ::=
+ *		  <IsNullPredicate> 
+ *		| <ComparisionPredicate> 
+ *		| <LikePredicate> 
+ *		| <BetweenPredicate> 
+ *		| <InPredicate> 
+ */
+void parseRelationalPredicatePart() :
+{}
+{
+  parseIsNullPredicate() 
+| parseComparisionPredicate() 
+| LOOKAHEAD(parseLikePredicate()) parseLikePredicate() 
+| LOOKAHEAD(parseBetweenPredicate()) parseBetweenPredicate()
+| parseInPredicate()
+}
+
+
+/*
+ * ComparisionPredicate ::=
+ *		  <ComparisionOperator> <Expression>
+ */
+void parseComparisionPredicate() :
+{}
+{
+  parseComparisionOperator() parseExpression()
+}
+
+
+/*
+ * ComparisionOperator ::=
+ *		  "=" | "<>" | "<" | "<=" | ">=" | ">"
+ */
+void parseComparisionOperator() :
+{}
+{
+  < EQ > #EQUAL_OPERATOR
+| < NEQ > #NOTEQUAL_OPERATOR
+| < LT > #LESS_OPERATOR
+| < LTE > #LESSEQUAL_OPERATOR
+| < GT > #GREATER_OPERATOR
+| < GTE > #GREATEREQUAL_OPERATOR
+}
+
+
+/*
+ * IsNullPredicate ::=
+ *		  "IS" <IsNullOperator>
+ */
+void parseIsNullPredicate() :
+{}
+{
+  < IS > parseIsNullOperator()
+}
+
+
+/*
+ * IsNullOperator ::=
+ *		  "IS" "NULL"
+ *		| "IS" "NOT" "NULL"
+ */
+void parseIsNullOperator() :
+{}
+{
+  < NULL_TOKEN > #ISNULL_OPERATOR
+| < NOT > < NULL_TOKEN > #ISNOTNULL_OPERATOR
+}
+
+
+/*
+ * LikePredicate ::=
+ *		  <LikeOperator> <LikePattern>
+ */
+void parseLikePredicate() :
+{}
+{
+  parseLikeOperator() parseLikePattern()
+}
+
+
+/*
+ * LikeOperator ::=
+ *		  "LIKE" 
+ *		  "ILIKE" 
+ *		  "NOT" "LIKE" 
+ *		  "NOT" "ILIKE" 
+ */
+void parseLikeOperator() :
+{}
+{
+  < ILIKE > #ILIKE_OPERATOR
+| < LIKE > #LIKE_OPERATOR
+| LOOKAHEAD(2) < NOT > < LIKE > #NOTLIKE_OPERATOR
+| < NOT > < ILIKE > #NOTILIKE_OPERATOR
+}
+
+
+/*
+ * LikePattern ::=
+ *		  <STRING_LITERAL>
+ *		  <REGEXP_LITERAL>
+ */
+void parseLikePattern() :
+{}
+{
+  parseString()
+| parseRegExp()
+}
+
+
+/*
+ * BetweenPredicate ::=
+ *		  <BetweenOperator>  <Expression> "AND" <Expression>
+ */
+void parseBetweenPredicate() :
+{}
+{
+  parseBetweenOperator() parseExpression() < AND > parseExpression()
+}
+
+
+/*
+ * BetweenOperator ::=
+ *		  "BETWEEN"
+ *		  "NOT" "BETWEEN"
+ */
+void parseBetweenOperator() :
+{}
+{
+  < BETWEEN > #BETWEEN_OPERATOR
+| < NOT > < BETWEEN  > #NOTBETWEEN_OPERATOR
+}
+
+
+/*
+ * InPredicate ::=
+ *		  <InOperator>  "(" <InPredicateList> ")"
+ */
+void parseInPredicate() :
+{}
+{
+  parseInOperator() "(" parseInPredicateList() ")"
+}
+
+
+/*
+ * InOperator ::=
+ *		  "IN"
+ *		  "NOT" "IN"
+ */
+void parseInOperator() :
+{}
+{
+  < IN > #IN_OPERATOR
+| < NOT > < IN  > #NOTIN_OPERATOR
+}
+
+
+/*
+ * InPredicateList ::=
+ *		  <Literal> ( "," <Literal> )*
+ */
+void parseInPredicateList() #LITERALLIST:
+{}
+{
+  parseInPredicateItem() (< COMMA > parseInPredicateItem() )*
+}
+
+
+/*
+ * InPredicateItem ::=
+ *		  <Literal> ( "," <Literal> )*
+ */
+void parseInPredicateItem() :
+{}
+{
+  parseLiteral()
+| parseBinding()
+| parseParameter()
+}
+
+
+
+
+
+/*****************************************
+ *         SPATIAL GRAMMAR               *
+ *****************************************/
+
+
+/*
+ * SpatialPredicate ::=
+ *		  "BBOX" <BBoxArguments>
+ * 		| "RELATE" <RelateArguments>
+ * 		| "CONTAINS" <SpatialArguments>
+ * 		| "CROSSES" <SpatialArguments>
+ * 		| "DISJOINT" <SpatialArguments>
+ * 		| "EQUALS" <SpatialArguments>
+ * 		| "INTERSECTS" <SpatialArguments>
+ * 		| "OVERLAPS" <SpatialArguments>
+ * 		| "TOUCHES" <SpatialArguments>
+ * 		| "WITHIN" <SpatialArguments>
+ * 		| "BEYOND" <SpatialDistanceArguments>
+ * 		| "DWITHIN" <SpatialDistanceArguments>
+ */
+void parseSpatialPredicate() :
+{}
+{
+  < BBOX > parseBBoxArguments() #ST_BBOX_OPERATOR
+| < RELATE > parseRelateArguments() #ST_RELATE_OPERATOR
+
+| < CONTAINS > parseSpatialArguments() #ST_CONTAINS_OPERATOR
+| < CROSSES > parseSpatialArguments() #ST_CROSSES_OPERATOR
+| < DISJOINT > parseSpatialArguments() #ST_DISJOINT_OPERATOR
+| < EQUALS > parseSpatialArguments() #ST_EQUALS_OPERATOR
+| < INTERSECTS > parseSpatialArguments() #ST_INTERSECTS_OPERATOR
+| < OVERLAPS > parseSpatialArguments() #ST_OVERLAPS_OPERATOR
+| < TOUCHES > parseSpatialArguments() #ST_TOUCHES_OPERATOR
+| < WITHIN > parseSpatialArguments() #ST_WITHIN_OPERATOR
+
+| < BEYOND > parseSpatialDistanceArguments() #ST_BEYOND_OPERATOR
+| < DWITHIN > parseSpatialDistanceArguments() #ST_DWITHIN_OPERATOR
+}
+
+
+/*
+ * BBoxArguments ::=
+ *		  "(" <Expression> "," <NUMBER_LITERAL> "," <NUMBER_LITERAL> "," <NUMBER_LITERAL> "," <NUMBER_LITERAL> ("," <STRING_LITERAL>)? ")"
+ */
+void parseBBoxArguments() :
+{}
+{
+  < LP > parseExpression() < COMMA > parseNumber() < COMMA > parseNumber() < COMMA > parseNumber() < COMMA > parseNumber() (< COMMA > parseString() )? < RP >
+}
+
+
+/*
+ * RelateArguments ::=
+ *		  "(" <Expression> "," <Expression> "," <DE9IM_LITERAL> ")"
+ */
+void parseRelateArguments() :
+{}
+{
+  < LP > parseExpression() < COMMA > parseExpression() < COMMA > parseDE9IM() < RP >
+}
+
+
+/*
+ * SpatialArguments ::=
+ *		  "(" <Expression> "," <Expression> ")"
+ */
+void parseSpatialArguments() :
+{}
+{
+  < LP > parseExpression() < COMMA > parseExpression() < RP >
+}
+
+
+/*
+ * SpatialDistanceArguments ::=
+ *		  "(" <Expression> "," <Expression> "," <INTEGER_LITERAL> "," <LENGTH_UNIT> ")"
+ */
+void parseSpatialDistanceArguments() :
+{}
+{
+  < LP > parseExpression() < COMMA > parseExpression() < COMMA > parseNumber() < COMMA > parseDistanceUnits() < RP >
+}
+
+
+
+
+
+/*****************************************
+ *            SORT GRAMMAR               *
+ *****************************************/
+void compileSorting() :
+{}
+{
+  parseSortList() < EOF >
+}
+
+
+/*
+ * SortList ::=
+ *		  <SortBy> ("," <SortBy>)*
+ */
+void parseSortList() #SORTLIST :
+{}
+{
+  parseSortBy() (< COMMA > parseSortBy() )*
+}
+
+
+/*
+ * SortBy ::=
+ *		  <SortDescending>
+ *		  <SortAscending>
+ */
+void parseSortBy() :
+{}
+{
+  LOOKAHEAD(parseSortDescending()) parseSortDescending()
+| parseSortAscending()
+}
+
+
+/*
+ * SortAscending ::=
+ *		  <Attribute> ( "ASC" )?
+ */
+void parseSortAscending() #SORTASCENDING :
+{}
+{
+  parseAttribute() (< ASC >)? 
+}
+
+
+/*
+ * SortAscending ::=
+ *		  <Attribute> "DESC"
+ */
+void parseSortDescending() #SORTDESCENDING :
+{}
+{
+  parseAttribute() < DESC >
+}

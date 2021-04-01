@@ -1,0 +1,271 @@
+/*
+ * Copyright (c) 2001-2016 Territorium Online Srl. All Rights Reserved.
+ *
+ * This file contains Original Code and/or Modifications of Original Code as
+ * defined in and that are subject to the Territorium Online License Version
+ * 1.0. You may not use this file except in compliance with the License. Please
+ * obtain a copy of the License at http://www.mapaccel.com/license/ and read it
+ * before using this file.
+ *
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS
+ * OR IMPLIED, AND TERRITORIUM ONLINE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+ * A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. Please see the
+ * License for the specific language governing rights and limitations under the
+ * License.
+ */
+options
+{
+  OUTPUT_LANGUAGE = "java"; // java,c++
+  JAVA_TEMPLATE_TYPE = "modern";
+
+  STATIC = false; /* true */
+  CACHE_TOKENS = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  UNICODE_INPUT = true; /* false */
+  JAVA_UNICODE_ESCAPE = true;
+  SUPPORT_CLASS_VISIBILITY_PUBLIC = false; /* true */
+
+  NODE_SCOPE_HOOK = true;
+  NODE_DEFAULT_VOID = true; /* false */
+}
+
+PARSER_BEGIN(Expression)
+
+package org.simple;
+
+public class Expression { 
+
+  protected final Node rootNode() { return jjtree.rootNode(); }
+  protected void jjtreeOpenNodeScope(Node node) throws ParseException {}
+  protected void jjtreeCloseNodeScope(Node node) throws ParseException {}
+
+}
+
+PARSER_END(Expression)
+
+
+/*****************************************
+ * LEXICAL & REGEXP GRAMMARS STARTS HERE *
+ *****************************************/
+// Skip White Space characters and Line Terminators
+SKIP :
+{
+  "\u0009"	/* Horizontal Tabulation \t */
+| "\n"		/* New Line u000A */
+| "\u000B"	/* Vertical Tabulation \v */
+| "\u000C"	/* Form Feed \f */
+| "\r"		/* Carriage Return u000D */
+| "\u0020"	/* Space */
+}
+
+
+// Separators & Brackets
+TOKEN :
+{
+  < LP : "(" >
+| < RP : ")" >
+| < DOT : "." >
+| < COMMA : "," >
+}
+
+
+
+TOKEN:
+{
+  < STRING_TOKEN : "'" ( "''" | ~["'"] )* "'" >
+| < IDENTIFIER_TOKEN : < LETTER > (< LETTER > | < DIGIT >)* >
+| < IDENTIFIER_QUOTED_TOKEN : "\"" ( ~["\""] )* "\"" >
+| < INTEGER_TOKEN : "0" | [ "1"-"9" ] (< DIGIT >)* >
+| < DECIMAL_TOKEN : "NaN" | "Infinity" | < DECIMAL > | (< INTEGER_TOKEN >  | < DECIMAL >) >
+
+| < #DIGIT :	["0"-"9"] >
+| < #DECIMAL :	("0" | ["1"-"9"] (< DIGIT >)*)? "." (< DIGIT >)+ >
+| < #LETTER : ["a"-"z", "A"-"Z", "_"] >
+}
+
+
+TOKEN [ IGNORE_CASE ] :
+{
+  < NULL_TOKEN : "null" >
+| < NOT : "NOT" >
+| < IS : "IS" >
+}
+
+
+
+/*****************************************
+ *         LITERAL GRAMMAR               *
+ *****************************************/
+void parseNull() :
+{}
+{
+  < NULL_TOKEN > #NIL
+}
+
+void parseNumber() :
+{}
+{
+  < DECIMAL_TOKEN > #DECIMAL
+}
+
+void parseString() :
+{}
+{
+  < STRING_TOKEN > #STRING
+}
+
+void parseIdentifier() :
+{}
+{
+  < IDENTIFIER_TOKEN > #IDENTIFIER
+| < IDENTIFIER_QUOTED_TOKEN > #IDENTIFIER_QUOTED
+}
+
+
+/*****************************************
+ *       NAME GRAMMAR                    *
+ *****************************************/
+/*
+ * Name ::=
+ *		  <LocalName> ("." <Name> ) ?
+ */
+void parseName() #NAME :
+{}
+{
+  parseLocalName()
+  (
+	< DOT > parseName()) ?
+}
+
+
+/*
+ * LocalName ::=
+ *		  <Identifier>
+ */
+void parseLocalName() #LOCALNAME :
+{}
+{
+  parseIdentifier()
+}
+
+
+
+
+/*****************************************
+ *       EXPRESSION GRAMMAR              *
+ *****************************************/
+void compileExpression() :
+{}
+{
+  parseExpressionList() < EOF >
+}
+
+
+/*
+ * ExpressionList ::=
+ *		  <Expression> ("," <Expression>)*
+ */
+void parseExpressionList() #EXPRESSIONLIST :
+{}
+{
+  parsePredicate() (< COMMA > parsePredicate() )*
+}
+
+
+/*
+ * Expression ::=
+ *		  <NULL_LITERAL>
+ *		| <Literal>
+ *		| <Attribute>
+ *		| "(" <Predicate> ")"
+ */
+void parseExpression() :
+{}
+{
+  parseNull()
+| parseLiteral()
+| parseAttribute() 
+| < LP > parsePredicate() < RP > 
+}
+
+
+/*
+ * Literal ::=
+ *		  <NUMBER_LITERAL>
+ */
+void parseLiteral() #LITERAL :
+{}
+{
+  parseString()
+}
+
+
+/*
+ * Attribute ::=
+ *		  <Name>
+ */
+void parseAttribute() #ATTRIBUTE :
+{}
+{
+  parseName()
+}
+
+
+
+/*****************************************
+ *          FILTER GRAMMAR               *
+ *****************************************/
+void compileFilter() :
+{}
+{
+  parsePredicate() < EOF >
+}
+
+
+/*
+ * Predicate ::=
+ *		  "(" <parseExpression> ")"
+ */
+void parsePredicate() :
+{}
+{
+  parseExpression()
+}
+
+
+/*
+ * RelationalPredicate ::=
+ *		  <Expression> <ExpressionPredicatePart>
+ */
+void parseRelationalPredicate() #RELATIONAL_PREDICATE :
+{}
+{
+  parseExpression() parseRelationalPredicatePart()
+}
+
+
+/*
+ * RelationalPredicatePart ::=
+ *		  "IS" <IsNullOperator>
+ */
+void parseRelationalPredicatePart() :
+{}
+{
+  < IS > parseIsNullOperator()
+}
+
+
+/*
+ * IsNullOperator ::=
+ *		  "IS" "NULL"
+ *		| "IS" "NOT" "NULL"
+ */
+void parseIsNullOperator() :
+{}
+{
+  < NULL_TOKEN > #ISNULL_OPERATOR
+| < NOT > < NULL_TOKEN > #ISNOTNULL_OPERATOR
+}

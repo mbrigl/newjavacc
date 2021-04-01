@@ -1,0 +1,45 @@
+PARSER_BEGIN(grammar)
+
+PARSER_END(grammar)
+
+SKIP:
+{
+  "\u0020"	/* Space */
+}
+
+TOKEN:
+{
+  < DOT : "." >
+| < INTEGER_TOKEN : "0" | [ "1"-"9" ] (< DIGIT >) * >
+| < DECIMAL_TOKEN : "NaN" | "Infinity" | < DECIMAL > | < INTEGER_TOKEN > >
+
+| < #DIGIT :	["0"-"9"] >
+| < #DECIMAL :	("0" | ["1"-"9"] (< DIGIT >) * ) ? "." (< DIGIT >)+ >
+}
+
+
+TOKEN [ IGNORE_CASE ] :
+{
+  < EQUALS : "eq" >
+| < NULL_TOKEN : "NULL" >
+| < ATTR_TOKEN : ( ["a"-"z"] )+ >
+}
+
+void compileExpression() :
+{}
+{
+  parseName()
+  < EQUALS >
+  (
+    < NULL_TOKEN >
+  | < DECIMAL_TOKEN > )
+  < EOF >
+}
+
+void parseName() :
+{}
+{
+  < ATTR_TOKEN >
+  (
+	< DOT > parseName()) ?
+}
